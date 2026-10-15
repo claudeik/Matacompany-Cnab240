@@ -1,0 +1,1 @@
+# Módulos baseados 100% na biblioteca padrão do Python (zipfile, io, json, datetime)

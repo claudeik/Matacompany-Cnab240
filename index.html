@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal DDA Itaú — Conversor CNAB 240 (44 para 47 dígitos)</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --itau-blue: #0A2240;
+      --itau-blue-dark: #061529;
+      --itau-orange: #EC6608;
+      --itau-orange-hover: #D55700;
+      --navy-900: #0f172a;
+      --navy-800: #1e293b;
+      --navy-700: #334155;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-50: #f8fafc;
+      --emerald-600: #059669;
+      --emerald-50: #ecfdf5;
+      --emerald-700: #047857;
+      --rose-600: #e11d48;
+      --rose-50: #fff1f2;
+      --rose-700: #be123c;
+      --amber-600: #d97706;
+      --amber-50: #fffbeb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, var(--itau-blue-dark) 0%, var(--itau-blue) 100%);
+      color: white;
+      padding: 1.25rem 2rem;
+      border-bottom: 4px solid var(--itau-orange);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .header-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-badge {
+      background: var(--itau-orange);
+      color: white;
+      font-weight: 800;
+      font-size: 1.15rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(236,102,8,0.4);
+    }
+
+    .brand-title h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-title p {
+      font-size: 0.825rem;
+      color: #94a3b8;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Container */
+    main {
+      max-width: 1440px;
+      margin: 1.5rem auto;
+      padding: 0 1.5rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Navigation Tabs */
+    .tabs-nav {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--slate-200);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--navy-700);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .tab-btn:hover {
+      color: var(--itau-orange);
+      background: #f1f5f9;
+    }
+
+    .tab-btn.active {
+      color: var(--itau-orange);
+      border-bottom-color: var(--itau-orange);
+      background: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Box */
+    .card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--slate-200);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Upload Area */
+    .drop-zone {
+      border: 2px dashed #94a3b8;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--itau-orange);
+      background: #fff7ed;
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .drop-icon {
+      width: 48px;
+      height: 48px;
+      color: var(--itau-orange);
+      margin-bottom: 0.75rem;
+    }
+
+    .drop-zone h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--navy-900);
+      margin-bottom: 0.35rem;
+    }
+
+    .drop-zone p {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+
+    .upload-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--itau-orange);
+      color: white;
+      box-shadow: 0 2px 6px rgba(236,102,8,0.3);
+    }
+    .btn-primary:hover {
+      background: var(--itau-orange-hover);
+    }
+
+    .btn-excel {
+      background: #107c41;
+      color: white;
+      box-shadow: 0 2px 6px rgba(16,124,65,0.3);
+    }
+    .btn-excel:hover {
+      background: #0d6535;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--navy-800);
+      border: 1px solid var(--slate-200);
+    }
+    .btn-secondary:hover {
+      background: var(--slate-100);
+      border-color: #cbd5e1;
+    }
+
+    .btn-navy {
+      background: var(--itau-blue);
+      color: white;
+    }
+    .btn-navy:hover {
+      background: var(--itau-blue-dark);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 1.15rem 1.25rem;
+      border: 1px solid var(--slate-200);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+
+    .stat-icon.blue { background: #e0f2fe; color: #0284c7; }
+    .stat-icon.green { background: #dcfce7; color: #16a34a; }
+    .stat-icon.red { background: #fee2e2; color: #dc2626; }
+    .stat-icon.orange { background: #ffedd5; color: #ea580c; }
+
+    .stat-info h4 {
+      font-size: 0.775rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin-bottom: 0.2rem;
+    }
+
+    .stat-info .stat-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--navy-900);
+    }
+
+    /* Toolbar */
+    .table-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-box {
+      padding: 0.55rem 0.85rem;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      width: 260px;
+      outline: none;
+      transition: border 0.15s ease;
+    }
+
+    .search-box:focus {
+      border-color: var(--itau-orange);
+      box-shadow: 0 0 0 3px rgba(236,102,8,0.15);
+    }
+
+    .select-filter {
+      padding: 0.55rem 0.85rem;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+      border: 1px solid var(--slate-200);
+      border-radius: 10px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.875rem;
+    }
+
+    thead th {
+      background: var(--itau-blue);
+      color: white;
+      padding: 0.85rem 1rem;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--slate-200);
+      transition: background 0.1s ease;
+    }
+
+    tbody tr:nth-child(even) {
+      background: var(--slate-50);
+    }
+
+    tbody tr:hover {
+      background: #f1f5f9;
+    }
+
+    tbody td {
+      padding: 0.85rem 1rem;
+      vertical-align: middle;
+    }
+
+    .mono-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f8fafc;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #94a3b8;
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      transition: color 0.15s ease;
+    }
+
+    .copy-btn:hover {
+      color: var(--itau-orange);
+      background: #e2e8f0;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-success {
+      background: var(--emerald-50);
+      color: var(--emerald-700);
+      border: 1px solid #a7f3d0;
+    }
+
+    .badge-error {
+      background: var(--rose-50);
+      color: var(--rose-700);
+      border: 1px solid #fecdd3;
+    }
+
+    .badge-warning {
+      background: var(--amber-50);
+      color: var(--amber-600);
+      border: 1px solid #fde68a;
+    }
+
+    .badge-bank {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      font-weight: 600;
+    }
+
+    /* Interactive Unit Converter Tab */
+    .converter-card {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .input-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .input-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+      color: var(--navy-800);
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      border: 2px solid var(--slate-200);
+      border-radius: 8px;
+      outline: none;
+      transition: border 0.15s ease;
+    }
+
+    .text-input:focus {
+      border-color: var(--itau-orange);
+      box-shadow: 0 0 0 3px rgba(236,102,8,0.15);
+    }
+
+    .presets-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .preset-pill {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.775rem;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--navy-700);
+      transition: all 0.15s ease;
+    }
+
+    .preset-pill:hover {
+      background: #e2e8f0;
+      color: var(--itau-orange);
+      border-color: var(--itau-orange);
+    }
+
+    .result-box {
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid var(--slate-200);
+      padding: 1.25rem;
+      margin-top: 1.25rem;
+    }
+
+    .field-breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .breakdown-item {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 0.6rem;
+      text-align: center;
+    }
+
+    .breakdown-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #64748b;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+
+    .breakdown-val {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--navy-900);
+      font-size: 0.95rem;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--navy-900);
+      color: white;
+      padding: 0.85rem 1.35rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      z-index: 9999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Footer */
+    footer {
+      background: white;
+      border-top: 1px solid var(--slate-200);
+      padding: 1.25rem 2rem;
+      text-align: center;
+      font-size: 0.825rem;
+      color: #64748b;
+      margin-top: auto;
+    }
+
+    /* Collapsible */
+    .collapsible-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--itau-orange);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: none;
+      border: none;
+      margin-top: 0.75rem;
+    }
+
+    .collapsible-trigger:hover {
+      text-decoration: underline;
+    }
+
+    .collapsible-body {
+      display: none;
+      margin-top: 0.75rem;
+    }
+
+    .collapsible-body.open {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-badge">DDA 240</div>
+        <div class="brand-title">
+          <h1>Portal DDA Itaú — Conversor CNAB 240</h1>
+          <p>Identificação de Código de Barras (44 dígitos) e Tradução para Linha Digitável (47 dígitos) lado a lado em Excel</p>
+        </div>
+      </div>
+      <div class="header-meta">
+        <span>📋 Especificação @Claudio (14/10/2026)</span>
+        <span>•</span>
+        <span>Módulo 10 & 11 Febraban</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-upload')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Processamento de Arquivo DDA (.DET)
+      </button>
+      <button class="tab-btn" onclick="switchTab('tab-single')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Conversor & Testes Unitários (44 ⇄ 47)
+      </button>
+      <button class="tab-btn" onclick="switchTab('tab-specs')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        Regras & Especificação Técnica
+      </button>
+    </nav>
+
+    <!-- Tab 1: Upload & Processamento DDA -->
+    <section id="tab-upload" class="tab-content active">
+      <div class="card">
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" accept=".DET,.det,.txt,.TXT,.rem,.ret" onchange="handleFileSelect(event)">
+          <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          <h3>Arraste e solte o arquivo DDA do Itaú (.DET) aqui</h3>
+          <p>Suporta arquivos de retorno CNAB 240, arquivos de texto ou listas com códigos de barras</p>
+          <div class="upload-actions">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('file-input').click()">
+              Selecionar Arquivo do Computador
+            </button>
+            <button type="button" class="btn btn-primary" onclick="carregarExemploDDA()">
+              ⚡ Carregar Exemplo DDA Itaú (.DET)
+            </button>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 1rem;">
+          <button type="button" class="collapsible-trigger" onclick="togglePasteArea()">
+            <span>Ou clique aqui para colar o texto CNAB / Códigos de Barras diretamente</span>
+            <span id="paste-chevron">▼</span>
+          </button>
+        </div>
+
+        <div id="paste-area" class="collapsible-body">
+          <div style="margin-top: 0.75rem;">
+            <label class="input-label" for="manual-text">Cole as linhas do arquivo .DET ou códigos de barras (um por linha):</label>
+            <textarea id="manual-text" rows="5" class="text-input" placeholder="Cole aqui o conteúdo do arquivo ou lista de 44 dígitos..."></textarea>
+            <div style="margin-top: 0.5rem; display: flex; justify-content: flex-end;">
+              <button class="btn btn-navy" onclick="processarTextoManual()">Processar Conteúdo Colado</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Área de Resultados (oculta inicialmente) -->
+      <div id="results-area" style="display: none;">
+        <!-- Indicadores / Cards de Totais -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue">📦</div>
+            <div class="stat-info">
+              <h4>Total de Títulos</h4>
+              <div class="stat-value" id="stat-total">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div class="stat-info">
+              <h4>Boletos Válidos</h4>
+              <div class="stat-value" id="stat-validos" style="color: var(--emerald-600);">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">⚠️</div>
+            <div class="stat-info">
+              <h4>Inconsistentes / Erros</h4>
+              <div class="stat-value" id="stat-erros" style="color: var(--rose-600);">0</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">💰</div>
+            <div class="stat-info">
+              <h4>Valor Total Nominal</h4>
+              <div class="stat-value" id="stat-valor">R$ 0,00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Ações & Filtros -->
+        <div class="card" style="padding: 1rem 1.25rem; margin-bottom: 1rem;">
+          <div class="table-toolbar">
+            <div class="filter-group">
+              <input type="text" id="search-input" class="search-box" placeholder="Buscar por código, banco, favorecido..." oninput="filtrarTabela()">
+              <select id="status-filter" class="select-filter" onchange="filtrarTabela()">
+                <option value="todos">Todos os Status</option>
+                <option value="validos">Apenas Válidos</option>
+                <option value="erros">Apenas com Erro</option>
+              </select>
+              <select id="banco-filter" class="select-filter" onchange="filtrarTabela()">
+                <option value="todos">Todos os Bancos</option>
+              </select>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button class="btn btn-excel" onclick="baixarExcel()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Baixar Planilha Excel (.xlsx) Lado a Lado
+              </button>
+              <button class="btn btn-secondary" onclick="baixarCSV()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Baixar CSV
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela Lado a Lado -->
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;">#</th>
+                <th>Código de Barras (44 dígitos)</th>
+                <th>Linha Digitável (47 dígitos)</th>
+                <th>Linha Digitável Formatada</th>
+                <th>Status</th>
+                <th>Banco</th>
+                <th>Beneficiário / Cedente</th>
+                <th>Valor</th>
+                <th>Vencimento</th>
+                <th>Origem</th>
+              </tr>
+            </thead>
+            <tbody id="boletos-table-body">
+              <!-- Preenchido via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: Conversor Unitário Interativo -->
+    <section id="tab-single" class="tab-content">
+      <div class="card converter-card">
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--navy-900);">
+          Conversor & Simulador de Código de Barras / Linha Digitável
+        </h2>
+        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.25rem;">
+          Digite um código de barras de 44 posições para convertê-lo na linha digitável de 47 posições, ou faça a operação inversa (47 ➔ 44).
+        </p>
+
+        <!-- Seleção de Direção -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.25rem;">
+          <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+            <input type="radio" name="direction" value="barras_para_linha" checked onchange="trocarDirecao()">
+            Código de Barras (44) ➔ Linha Digitável (47)
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer; font-weight: 600; font-size: 0.9rem;">
+            <input type="radio" name="direction" value="linha_para_barras" onchange="trocarDirecao()">
+            Linha Digitável (47) ➔ Código de Barras (44) [Inversa]
+          </label>
+        </div>
+
+        <!-- Input Unitário -->
+        <div class="input-group">
+          <label class="input-label" id="label-input-single" for="single-input">Código de Barras (44 dígitos):</label>
+          <input type="text" id="single-input" class="text-input" placeholder="Ex: 34191100000000150001234567890123456789012345" oninput="executarConversaoUnitaria()">
+          
+          <div class="presets-row">
+            <span style="font-size: 0.775rem; font-weight: 600; color: #64748b; align-self: center;">Casos de Teste Oficiais (@Claudio):</span>
+            <button type="button" class="preset-pill" onclick="carregarPreset('caso_a')">Caso A (Itaú - R$ 150,00)</button>
+            <button type="button" class="preset-pill" onclick="carregarPreset('caso_b')">Caso B (Banco do Brasil - Sem Vencimento)</button>
+            <button type="button" class="preset-pill" onclick="carregarPreset('caso_c')">Caso C (Santander - R$ 1.234,56 / Fator 9999)</button>
+            <button type="button" class="preset-pill" onclick="carregarPreset('erro_e05')">Erro E05 (DV Alterado)</button>
+          </div>
+        </div>
+
+        <!-- Box de Resultado do Unitário -->
+        <div id="single-result-box" class="result-box" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--navy-900);">Resultado da Conversão</h4>
+            <span id="single-status-badge"></span>
+          </div>
+
+          <div id="single-success-content">
+            <div style="margin-bottom: 0.85rem;">
+              <span style="font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.25rem;">
+                Linha Digitável Formatada (47 posições):
+              </span>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="text" id="single-res-fmt" readonly class="text-input" style="background: white; font-weight: 700; color: var(--itau-blue);">
+                <button class="btn btn-secondary" onclick="copiarValor('single-res-fmt')">Copiar</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 0.85rem;">
+              <span style="font-size: 0.75rem; text-transform: uppercase; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.25rem;">
+                Linha Digitável Bruta (47 dígitos contínuos):
+              </span>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="text" id="single-res-raw" readonly class="text-input" style="background: white;">
+                <button class="btn btn-secondary" onclick="copiarValor('single-res-raw')">Copiar</button>
+              </div>
+            </div>
+
+            <!-- Decomposição dos Campos da Linha Digitável -->
+            <div class="field-breakdown">
+              <div class="breakdown-item">
+                <div class="breakdown-label">Banco / Moeda</div>
+                <div class="breakdown-val" id="bd-banco">-</div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-label">DV Geral (Pág. 5)</div>
+                <div class="breakdown-val" id="bd-dvg">-</div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-label">Fator Venc.</div>
+                <div class="breakdown-val" id="bd-fator">-</div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-label">Data Estimada</div>
+                <div class="breakdown-val" id="bd-data">-</div>
+              </div>
+              <div class="breakdown-item">
+                <div class="breakdown-label">Valor</div>
+                <div class="breakdown-val" id="bd-valor">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="single-error-content" style="display: none; color: var(--rose-700); background: var(--rose-50); padding: 0.85rem; border-radius: 8px; border: 1px solid #fecdd3;">
+            <strong id="single-error-code"></strong>: <span id="single-error-msg"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 3: Regras de Negócio & Especificação Técnica -->
+    <section id="tab-specs" class="tab-content">
+      <div class="card">
+        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--navy-900); margin-bottom: 0.5rem;">
+          Especificação Técnica de Conversão (Resumo Executivo)
+        </h2>
+        <p style="font-size: 0.875rem; color: #64748b; margin-bottom: 1.5rem;">
+          Implementação rigorosa das regras FEBRABAN e da Especificação Técnica elaborada por @Claudio (14/10/2026).
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+          <!-- Bloco 1: Estrutura do Código de Barras (44) -->
+          <div style="border: 1px solid var(--slate-200); border-radius: 8px; padding: 1.25rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--itau-blue); margin-bottom: 0.75rem;">
+              1. Código de Barras (44 Posições)
+            </h3>
+            <table style="font-size: 0.8rem;">
+              <thead>
+                <tr>
+                  <th>Posição</th>
+                  <th>Tam</th>
+                  <th>Campo</th>
+                  <th>Regra</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1–3</td><td>3</td><td>Código do Banco</td><td>Ex: 341 (Itaú), 001, 033, 237</td></tr>
+                <tr><td>4</td><td>1</td><td>Código da Moeda</td><td>9 = Real (outros valores geram aviso W01)</td></tr>
+                <tr><td>5</td><td>1</td><td>DV Geral</td><td>Módulo 11 sobre as outras 43 posições</td></tr>
+                <tr><td>6–9</td><td>4</td><td>Fator de Vencimento</td><td>0000 = sem vencimento</td></tr>
+                <tr><td>10–19</td><td>10</td><td>Valor Nominal</td><td>Em centavos (0000000000 = valor livre)</td></tr>
+                <tr><td>20–44</td><td>25</td><td>Campo Livre</td><td>Definido por cada banco emissor</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Bloco 2: Estrutura da Linha Digitável (47) -->
+          <div style="border: 1px solid var(--slate-200); border-radius: 8px; padding: 1.25rem;">
+            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--itau-blue); margin-bottom: 0.75rem;">
+              2. Linha Digitável (47 Posições)
+            </h3>
+            <table style="font-size: 0.8rem;">
+              <thead>
+                <tr>
+                  <th>Campo</th>
+                  <th>Tam</th>
+                  <th>Composição</th>
+                  <th>Cálculo DV</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Campo 1</td><td>10</td><td>Banco(3) + Moeda(1) + Livre[1..5] + DV1</td><td>Módulo 10</td></tr>
+                <tr><td>Campo 2</td><td>11</td><td>Livre[6..15] + DV2</td><td>Módulo 10</td></tr>
+                <tr><td>Campo 3</td><td>11</td><td>Livre[16..25] + DV3</td><td>Módulo 10</td></tr>
+                <tr><td>Campo 4</td><td>1</td><td>DV Geral do Código de Barras</td><td>Copiado da pos. 5</td></tr>
+                <tr><td>Campo 5</td><td>14</td><td>Fator de Vencimento(4) + Valor(10)</td><td>Copiado das pos. 6–19</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabela de Códigos de Erro -->
+        <div style="margin-top: 1.5rem; border: 1px solid var(--slate-200); border-radius: 8px; padding: 1.25rem;">
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--itau-blue); margin-bottom: 0.75rem;">
+            3. Catálogo Oficial de Códigos de Erro e Avisos
+          </h3>
+          <table style="font-size: 0.85rem;">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Código</th>
+                <th>Condição Disparadora</th>
+                <th>Mensagem Oficial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="badge badge-error">E01</span></td><td>Entrada nula ou vazia</td><td>Código de barras não informado</td></tr>
+              <tr><td><span class="badge badge-error">E02</span></td><td>Caractere não numérico após a sanitização</td><td>Código de barras contém caracteres inválidos</td></tr>
+              <tr><td><span class="badge badge-error">E03</span></td><td>Tamanho diferente de 44 (ou 47 na operação inversa)</td><td>Tamanho inválido: esperado 44 dígitos</td></tr>
+              <tr><td><span class="badge badge-error">E04</span></td><td>Primeiro dígito igual a 8</td><td>Boleto de arrecadação/convênio não suportado</td></tr>
+              <tr><td><span class="badge badge-error">E05</span></td><td>DV geral calculado diferente da posição 5</td><td>Dígito verificador geral inconsistente</td></tr>
+              <tr><td><span class="badge badge-error">E06</span></td><td>DV de campo inconsistente (operação inversa)</td><td>Dígito verificador do campo N inconsistente</td></tr>
+              <tr><td><span class="badge badge-warning">W01</span></td><td>Moeda (posição 4) diferente de 9</td><td>Aviso: código de moeda diferente de 9 (Real)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-msg">Mensagem</span>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>Portal DDA Itaú — Processamento CNAB 240 • Linha Digitável e Código de Barras • Gerador OpenXML (.xlsx)</p>
+  </footer>
+
+  <script>
+    // Estado global da aplicação
+    let registrosGlobais = [];
+
+    // BANCOS CONHECIDOS
+    const BANCOS_CONHECIDOS = {
+      "001": "Banco do Brasil S.A.",
+      "033": "Banco Santander (Brasil) S.A.",
+      "104": "Caixa Econômica Federal",
+      "237": "Banco Bradesco S.A.",
+      "341": "Banco Itaú Unibanco S.A.",
+      "756": "Banco Cooperativo Sicoob S.A.",
+      "748": "Banco Cooperativo Sicredi S.A.",
+      "077": "Banco Inter S.A.",
+      "260": "Nu Pagamentos S.A. (Nubank)",
+      "212": "Banco Original S.A.",
+      "422": "Banco Safra S.A.",
+      "041": "Banrisul",
+      "655": "Banco Votorantim S.A.",
+      "707": "Banco Daycoval S.A.",
+      "389": "Banco Mercantil do Brasil S.A."
+    };
+
+    function obterNomeBancoJs(cod) {
+      const c = String(cod || '').padStart(3, '0');
+      return BANCOS_CONHECIDOS[c] || `Banco ${c}`;
+    }
+
+    // Módulo 10 (Seção 7 da Especificação)
+    function mod10Js(campo) {
+      let soma = 0;
+      let peso = 2;
+      for (let i = campo.length - 1; i >= 0; i--) {
+        let prod = parseInt(campo[i], 10) * peso;
+        soma += Math.floor(prod / 10) + (prod % 10);
+        peso = (peso === 2) ? 1 : 2;
+      }
+      let resto = soma % 10;
+      return String((10 - resto) % 10);
+    }
+
+    // Módulo 11 (Seção 7 da Especificação)
+    function mod11Js(bloco) {
+      let soma = 0;
+      let peso = 2;
+      for (let i = bloco.length - 1; i >= 0; i--) {
+        soma += parseInt(bloco[i], 10) * peso;
+        peso = (peso === 9) ? 2 : peso + 1;
+      }
+      let resto = soma % 11;
+      let dv = 11 - resto;
+      if (dv === 0 || dv === 10 || dv === 11) return "1";
+      return String(dv);
+    }
+
+    function calcularDataFatorJs(fatorStr) {
+      if (!fatorStr || fatorStr === '0000') return "Sem vencimento";
+      const f = parseInt(fatorStr, 10);
+      if (isNaN(f) || f < 1000) return `Fator ${fatorStr}`;
+      // Base de reinício Febraban: 22/02/2025 = fator 1000
+      const base = new Date(2025, 1, 22);
+      base.setDate(base.getDate() + (f - 1000));
+      const dia = String(base.getDate()).padStart(2, '0');
+      const mes = String(base.getMonth() + 1).padStart(2, '0');
+      const ano = base.getFullYear();
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function formatarMoedaJs(cents) {
+      const val = (Number(cents) || 0) / 100;
+      return "R$ " + val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatarDocJs(inscricao, tipo) {
+      const num = String(inscricao || '').replace(/\D/g, '');
+      if (tipo === '1' || num.length === 11) {
+        const s = num.padStart(11, '0');
+        return `${s.slice(0,3)}.${s.slice(3,6)}.${s.slice(6,9)}-${s.slice(9)}`;
+      } else if (tipo === '2' || num.length === 14) {
+        const s = num.padStart(14, '0');
+        return `${s.slice(0,2)}.${s.slice(2,5)}.${s.slice(5,8)}/${s.slice(8,12)}-${s.slice(12)}`;
+      }
+      return num;
+    }
+
+    // Conversão 44 -> 47
+    function converterBarrasParaLinhaJs(b) {
+      const bLimpo = String(b || '').replace(/[\s.\-]/g, '');
+      if (!bLimpo) return { ok: false, erro: { codigo: 'E01', mensagem: 'Código de barras não informado' } };
+      if (!/^\d+$/.test(bLimpo)) return { ok: false, erro: { codigo: 'E02', mensagem: 'Código de barras contém caracteres inválidos' } };
+      if (bLimpo.length !== 44) return { ok: false, erro: { codigo: 'E03', mensagem: `Tamanho inválido: esperado 44 dígitos, recebido ${bLimpo.length}` } };
+      if (bLimpo[0] === '8') return { ok: false, erro: { codigo: 'E04', mensagem: 'Boleto de arrecadação/convênio não suportado' } };
+
+      const dvCalculado = mod11Js(bLimpo.slice(0, 4) + bLimpo.slice(5, 44));
+      if (dvCalculado !== bLimpo[4]) {
+        return { ok: false, erro: { codigo: 'E05', mensagem: `Dígito verificador geral inconsistente (informado: ${bLimpo[4]}, esperado: ${dvCalculado})` } };
+      }
+
+      const avisos = [];
+      if (bLimpo[3] !== '9') avisos.push(`W01: Moeda (${bLimpo[3]}) diferente de 9 (Real)`);
+
+      const c1 = bLimpo.slice(0, 4) + bLimpo.slice(19, 24);
+      const c2 = bLimpo.slice(24, 34);
+      const c3 = bLimpo.slice(34, 44);
+
+      const dv1 = mod10Js(c1);
+      const dv2 = mod10Js(c2);
+      const dv3 = mod10Js(c3);
+      const dvGeral = bLimpo[4];
+      const fatorValor = bLimpo.slice(5, 19);
+
+      const bruta = `${c1}${dv1}${c2}${dv2}${c3}${dv3}${dvGeral}${fatorValor}`;
+      const formatada = `${c1.slice(0, 5)}.${c1.slice(5)}${dv1} ${c2.slice(0, 5)}.${c2.slice(5)}${dv2} ${c3.slice(0, 5)}.${c3.slice(5)}${dv3} ${dvGeral} ${fatorValor}`;
+
+      const bancoCod = bLimpo.slice(0, 3);
+      const fatorStr = bLimpo.slice(5, 9);
+      const valorStr = bLimpo.slice(9, 19);
+      const valorCents = parseInt(valorStr, 10) || 0;
+
+      return {
+        ok: true,
+        valor: bruta,
+        formatada: formatada,
+        avisos: avisos,
+        banco_cod: bancoCod,
+        banco_nome: obterNomeBancoJs(bancoCod),
+        fator_vencimento: fatorStr,
+        valor_nominal_cents: valorCents,
+        valor_nominal_formatado: formatarMoedaJs(valorCents),
+        data_vencimento_calculada: calcularDataFatorJs(fatorStr)
+      };
+    }
+
+    // Conversão 47 -> 44 (Inversa)
+    function converterLinhaParaBarrasJs(linha) {
+      const lLimpo = String(linha || '').replace(/[\s.\-]/g, '');
+      if (!lLimpo) return { ok: false, erro: { codigo: 'E01', mensagem: 'Linha digitável não informada' } };
+      if (!/^\d+$/.test(lLimpo)) return { ok: false, erro: { codigo: 'E02', mensagem: 'Linha digitável contém caracteres inválidos' } };
+      if (lLimpo.length !== 47) return { ok: false, erro: { codigo: 'E03', mensagem: `Tamanho inválido: esperado 47 dígitos, recebido ${lLimpo.length}` } };
+      if (lLimpo[0] === '8') return { ok: false, erro: { codigo: 'E04', mensagem: 'Boleto de arrecadação/convênio não suportado' } };
+
+      const c1 = lLimpo.slice(0, 10);
+      const c2 = lLimpo.slice(10, 21);
+      const c3 = lLimpo.slice(21, 32);
+      const dvg = lLimpo[32];
+      const fv = lLimpo.slice(33, 47);
+
+      if (mod10Js(c1.slice(0, 9)) !== c1[9]) {
+        return { ok: false, erro: { codigo: 'E06', mensagem: `Dígito verificador do campo 1 inconsistente (esperado: ${mod10Js(c1.slice(0,9))}, informado: ${c1[9]})` } };
+      }
+      if (mod10Js(c2.slice(0, 10)) !== c2[10]) {
+        return { ok: false, erro: { codigo: 'E06', mensagem: `Dígito verificador do campo 2 inconsistente (esperado: ${mod10Js(c2.slice(0,10))}, informado: ${c2[10]})` } };
+      }
+      if (mod10Js(c3.slice(0, 10)) !== c3[10]) {
+        return { ok: false, erro: { codigo: 'E06', mensagem: `Dígito verificador do campo 3 inconsistente (esperado: ${mod10Js(c3.slice(0,10))}, informado: ${c3[10]})` } };
+      }
+
+      const barras = c1.slice(0, 4) + dvg + fv + c1.slice(4, 9) + c2.slice(0, 10) + c3.slice(0, 10);
+      const avisos = [];
+      if (barras[3] !== '9') avisos.push(`W01: Moeda (${barras[3]}) diferente de 9`);
+
+      return {
+        ok: true,
+        valor: barras,
+        avisos: avisos,
+        banco_cod: barras.slice(0, 3),
+        banco_nome: obterNomeBancoJs(barras.slice(0, 3))
+      };
+    }
+
+    // Parser CNAB 240 / DDA em JavaScript
+    function parseCnabDdaJs(conteudo) {
+      const linhas = conteudo.split(/\r?\n/);
+      const registros = [];
+
+      for (let i = 0; i < linhas.length; i++) {
+        const linha = linhas[i];
+        if (!linha.trim()) continue;
+        const idx = i + 1;
+
+        // CNAB 240
+        if (linha.length >= 200) {
+          const tipoReg = linha.charAt(7);
+          const segmento = linha.charAt(13).toUpperCase();
+
+          if (tipoReg === '3' && segmento === 'G') {
+            const barras = linha.substring(17, 61).trim();
+            const tipoInsc = linha.charAt(61).trim();
+            const numInsc = linha.substring(62, 77).trim();
+            const nomeBenef = linha.substring(77, 107).trim();
+            const dataVenc = linha.substring(107, 115).trim();
+            const valorCnab = linha.substring(115, 130).trim();
+
+            const conv = converterBarrasParaLinhaJs(barras);
+            let vencFmt = "";
+            if (dataVenc.length === 8 && /^\d+$/.test(dataVenc) && dataVenc !== '00000000') {
+              vencFmt = `${dataVenc.slice(0,2)}/${dataVenc.slice(2,4)}/${dataVenc.slice(4,8)}`;
+            } else {
+              vencFmt = conv.data_vencimento_calculada || '';
+            }
+
+            const valCents = (valorCnab && /^\d+$/.test(valorCnab)) ? parseInt(valorCnab, 10) : (conv.valor_nominal_cents || 0);
+
+            registros.push({
+              linha_num: idx,
+              origem: 'Segmento G (DDA)',
+              codigo_barras: barras,
+              tamanho_barras: barras.length,
+              valido: conv.ok,
+              linha_digitavel: conv.valor || '',
+              linha_digitavel_formatada: conv.formatada || '',
+              erro: conv.erro,
+              avisos: conv.avisos || [],
+              banco_cod: conv.banco_cod || barras.slice(0,3),
+              banco_nome: conv.banco_nome || obterNomeBancoJs(barras.slice(0,3)),
+              beneficiario_nome: nomeBenef || 'Não informado',
+              beneficiario_doc: formatarDocJs(numInsc, tipoInsc),
+              valor_formatado: formatarMoedaJs(valCents),
+              valor_centavos: valCents,
+              data_vencimento: vencFmt,
+              fator_vencimento: conv.fator_vencimento || barras.slice(5, 9)
+            });
+            continue;
+          } else if (tipoReg === '3' && segmento === 'J') {
+            const barras = linha.substring(17, 61).trim();
+            const nomeFav = linha.substring(61, 91).trim();
+            const valorCnab = linha.substring(91, 106).trim();
+            const dataVenc = linha.substring(144, 152).trim();
+
+            const conv = converterBarrasParaLinhaJs(barras);
+            let vencFmt = (dataVenc.length === 8 && /^\d+$/.test(dataVenc) && dataVenc !== '00000000') ?
+              `${dataVenc.slice(0,2)}/${dataVenc.slice(2,4)}/${dataVenc.slice(4,8)}` : (conv.data_vencimento_calculada || '');
+            const valCents = (valorCnab && /^\d+$/.test(valorCnab)) ? parseInt(valorCnab, 10) : (conv.valor_nominal_cents || 0);
+
+            registros.push({
+              linha_num: idx,
+              origem: 'Segmento J (Pagamentos)',
+              codigo_barras: barras,
+              tamanho_barras: barras.length,
+              valido: conv.ok,
+              linha_digitavel: conv.valor || '',
+              linha_digitavel_formatada: conv.formatada || '',
+              erro: conv.erro,
+              avisos: conv.avisos || [],
+              banco_cod: conv.banco_cod || barras.slice(0,3),
+              banco_nome: conv.banco_nome || obterNomeBancoJs(barras.slice(0,3)),
+              beneficiario_nome: nomeFav || 'Não informado',
+              beneficiario_doc: '',
+              valor_formatado: formatarMoedaJs(valCents),
+              valor_centavos: valCents,
+              data_vencimento: vencFmt,
+              fator_vencimento: conv.fator_vencimento || barras.slice(5, 9)
+            });
+            continue;
+          } else if (['0', '1', '5', '9'].includes(tipoReg)) {
+            continue;
+          }
+        }
+
+        // Linhas de 44 dígitos
+        const digitos = linha.replace(/\D/g, '');
+        if (digitos.length === 44) {
+          const conv = converterBarrasParaLinhaJs(digitos);
+          registros.push({
+            linha_num: idx,
+            origem: 'Linha Código de Barras (44)',
+            codigo_barras: digitos,
+            tamanho_barras: 44,
+            valido: conv.ok,
+            linha_digitavel: conv.valor || '',
+            linha_digitavel_formatada: conv.formatada || '',
+            erro: conv.erro,
+            avisos: conv.avisos || [],
+            banco_cod: conv.banco_cod || digitos.slice(0,3),
+            banco_nome: conv.banco_nome || obterNomeBancoJs(digitos.slice(0,3)),
+            beneficiario_nome: 'Não identificado',
+            beneficiario_doc: '',
+            valor_formatado: conv.valor_nominal_formatado || 'R$ 0,00',
+            valor_centavos: conv.valor_nominal_cents || 0,
+            data_vencimento: conv.data_vencimento_calculada || '',
+            fator_vencimento: conv.fator_vencimento || digitos.slice(5, 9)
+          });
+          continue;
+        }
+
+        // Linhas de 47 dígitos
+        if (digitos.length === 47) {
+          const inv = converterLinhaParaBarrasJs(digitos);
+          const barras = inv.valor || '';
+          const conv = inv.ok ? converterBarrasParaLinhaJs(barras) : { ok: false, erro: inv.erro };
+          registros.push({
+            linha_num: idx,
+            origem: 'Linha Digitável (47) Invertida',
+            codigo_barras: barras || 'Erro na inversão',
+            tamanho_barras: barras.length,
+            valido: inv.ok,
+            linha_digitavel: digitos,
+            linha_digitavel_formatada: conv.formatada || '',
+            erro: inv.erro,
+            avisos: inv.avisos || [],
+            banco_cod: inv.banco_cod || digitos.slice(0,3),
+            banco_nome: inv.banco_nome || obterNomeBancoJs(digitos.slice(0,3)),
+            beneficiario_nome: 'Não identificado',
+            beneficiario_doc: '',
+            valor_formatado: conv.valor_nominal_formatado || 'R$ 0,00',
+            valor_centavos: conv.valor_nominal_cents || 0,
+            data_vencimento: conv.data_vencimento_calculada || '',
+            fator_vencimento: conv.fator_vencimento || ''
+          });
+          continue;
+        }
+
+        // Padrão regex 44 dígitos no meio
+        const match44 = linha.match(/\b\d{44}\b/);
+        if (match44) {
+          const codigo = match44[0];
+          const conv = converterBarrasParaLinhaJs(codigo);
+          registros.push({
+            linha_num: idx,
+            origem: 'Trecho extraído (44 dígitos)',
+            codigo_barras: codigo,
+            tamanho_barras: 44,
+            valido: conv.ok,
+            linha_digitavel: conv.valor || '',
+            linha_digitavel_formatada: conv.formatada || '',
+            erro: conv.erro,
+            avisos: conv.avisos || [],
+            banco_cod: conv.banco_cod || codigo.slice(0,3),
+            banco_nome: conv.banco_nome || obterNomeBancoJs(codigo.slice(0,3)),
+            beneficiario_nome: 'Não identificado',
+            beneficiario_doc: '',
+            valor_formatado: conv.valor_nominal_formatado || 'R$ 0,00',
+            valor_centavos: conv.valor_nominal_cents || 0,
+            data_vencimento: conv.data_vencimento_calculada || '',
+            fator_vencimento: conv.fator_vencimento || codigo.slice(5, 9)
+          });
+        }
+      }
+
+      const total = registros.length;
+      const validos = registros.filter(r => r.valido).length;
+      const erros = total - validos;
+      const somaCents = registros.filter(r => r.valido).reduce((acc, r) => acc + (r.valor_centavos || 0), 0);
+
+      return {
+        ok: true,
+        total: total,
+        validos: validos,
+        erros: erros,
+        soma_total: formatarMoedaJs(somaCents),
+        registros: registros
+      };
+    }
+
+    // Alternância de Abas
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Toggle para área de colar texto manual
+    function togglePasteArea() {
+      const area = document.getElementById('paste-area');
+      const chevron = document.getElementById('paste-chevron');
+      if (area.classList.contains('open')) {
+        area.classList.remove('open');
+        chevron.textContent = '▼';
+      } else {
+        area.classList.add('open');
+        chevron.textContent = '▲';
+      }
+    }
+
+    // Toast de notificação
+    function showToast(mensagem, icon = '✓') {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = mensagem;
+      document.getElementById('toast-icon').textContent = icon;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    function copiarTexto(texto) {
+      navigator.clipboard.writeText(texto).then(() => {
+        showToast('Copiado para a área de transferência: ' + texto.substring(0, 20) + '...');
+      }).catch(err => {
+        showToast('Erro ao copiar texto', '⚠️');
+      });
+    }
+
+    function copiarValor(elementId) {
+      const input = document.getElementById(elementId);
+      if (input && input.value) copiarTexto(input.value);
+    }
+
+    // Drag and Drop Zone
+    const dropZone = document.getElementById('drop-zone');
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files.length > 0) processarArquivo(files[0]);
+    });
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) processarArquivo(file);
+    }
+
+    function processarArquivo(file) {
+      showToast('Lendo arquivo ' + file.name + '...', '⏳');
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const conteudo = e.target.result;
+        enviarConteudoParaProcessamento(conteudo);
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    // Amostra embutida de fallback
+    const AMOSTRA_DDA_EMBUTIDA = `34100000         200000000000191                                                        EMPRESA EXEMPLO S.A.          BANCO ITAU S.A.               14102026204500000001080                                                                            \r\n34100011R0300040 200000000000191                                                        EMPRESA EXEMPLO S.A.          VARREDURA DDA ELECTRONICA                                                         00000114102026                                            \r\n3410001300001G 0134191100000000150001234567890123456789012345211222333000181DISTRIBUIDORA ALFA LTDA        1510202600000000015000                                                                                                                              \r\n3410001300002H 01000000000000000000000000000000                                                                                                                                                                                                                    \r\n3410001300003G 0100193000000000000000000000000000000000000001200000000000191BANCO DO BRASIL CONVENIOS      0000000000000000000000                                                                                                                              \r\n3410001300004H 01                                                                                                                                                                                                                                                   \r\n3410001300005G 0103391999900001234569876543210987654321098765299888777000122SERVICOS E LOGISTICA BETA       2102202500000000123456                                                                                                                              \r\n3410001300006H 01                                                                                                                                                                                                                                                   \r\n3410001300007G 0123799159900000845500987654321098765432109876244555666000133TELECOMUNICACOES BRASIL S.A.    1410202600000000084550                                                                                                                              \r\n3410001300008G 0110491160000001250001122334455667788990011223112345678909   CONSULTORIA FINANCEIRA SILVA   1510202600000000125000                                                                                                                              \r\n3410001300009G 0134192100000000150001234567890123456789012345255666777000144FORNECEDOR ERRO TESTE          1510202600000000015000                                                                                                                              \r\n34100015         00001100000000348006                                                                                                                                                                                                                               \r\n34199999         000001000013                                                                                                                                                                                                                                       `;
+
+    function carregarExemploDDA() {
+      showToast('Carregando arquivo de exemplo DDA Itaú...', '⏳');
+      fetch('/api/sample')
+        .then(res => {
+          if (!res.ok) throw new Error('API offline');
+          return res.json();
+        })
+        .then(data => {
+          if (data.ok) {
+            enviarConteudoParaProcessamento(data.content);
+            showToast('Arquivo de exemplo Itaú DDA carregado!');
+          } else {
+            throw new Error();
+          }
+        })
+        .catch(() => {
+          // Fallback instantâneo cliente
+          enviarConteudoParaProcessamento(AMOSTRA_DDA_EMBUTIDA);
+          showToast('Arquivo de exemplo Itaú DDA carregado!');
+        });
+    }
+
+    function processarTextoManual() {
+      const texto = document.getElementById('manual-text').value.trim();
+      if (!texto) {
+        showToast('Cole o conteúdo no campo de texto primeiro', '⚠️');
+        return;
+      }
+      enviarConteudoParaProcessamento(texto);
+    }
+
+    // Processamento híbrido (Backend API com fallback automático em Javascript no cliente)
+    function enviarConteudoParaProcessamento(conteudo) {
+      fetch('/api/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conteudo: conteudo })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Falha HTTP');
+        return res.json();
+      })
+      .then(data => {
+        if (data.ok) {
+          registrosGlobais = data.registros;
+          renderizarResultados(data);
+          showToast(`${data.total} boletos processados com sucesso!`);
+        } else {
+          throw new Error(data.mensagem);
+        }
+      })
+      .catch(() => {
+        // Fallback robusto no cliente
+        const data = parseCnabDdaJs(conteudo);
+        registrosGlobais = data.registros;
+        renderizarResultados(data);
+        showToast(`${data.total} boletos processados com sucesso!`);
+      });
+    }
+
+    function renderizarResultados(data) {
+      document.getElementById('results-area').style.display = 'block';
+      document.getElementById('stat-total').textContent = data.total;
+      document.getElementById('stat-validos').textContent = data.validos;
+      document.getElementById('stat-erros').textContent = data.erros;
+      document.getElementById('stat-valor').textContent = data.soma_total;
+
+      const bancoFilter = document.getElementById('banco-filter');
+      const bancosSet = new Set();
+      data.registros.forEach(r => {
+        if (r.banco_cod) bancosSet.add(`${r.banco_cod} - ${r.banco_nome}`);
+      });
+      bancoFilter.innerHTML = '<option value="todos">Todos os Bancos</option>';
+      bancosSet.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b;
+        opt.textContent = b;
+        bancoFilter.appendChild(opt);
+      });
+
+      filtrarTabela();
+      document.getElementById('results-area').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function filtrarTabela() {
+      const termo = document.getElementById('search-input').value.toLowerCase();
+      const statusFiltro = document.getElementById('status-filter').value;
+      const bancoFiltro = document.getElementById('banco-filter').value;
+
+      const filtrados = registrosGlobais.filter(reg => {
+        if (statusFiltro === 'validos' && !reg.valido) return false;
+        if (statusFiltro === 'erros' && reg.valido) return false;
+
+        if (bancoFiltro !== 'todos') {
+          const bLabel = `${reg.banco_cod} - ${reg.banco_nome}`;
+          if (bLabel !== bancoFiltro) return false;
+        }
+
+        if (termo) {
+          const searchStr = `${reg.codigo_barras} ${reg.linha_digitavel} ${reg.linha_digitavel_formatada} ${reg.banco_nome} ${reg.beneficiario_nome} ${reg.beneficiario_doc}`.toLowerCase();
+          if (!searchStr.includes(termo)) return false;
+        }
+        return true;
+      });
+
+      renderizarTabela(filtrados);
+    }
+
+    function renderizarTabela(registros) {
+      const tbody = document.getElementById('boletos-table-body');
+      tbody.innerHTML = '';
+
+      if (registros.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 2rem; color: #94a3b8;">Nenhum registro encontrado para os filtros selecionados.</td></tr>';
+        return;
+      }
+
+      registros.forEach((reg, idx) => {
+        const tr = document.createElement('tr');
+        let statusBadge = '';
+        if (reg.valido) {
+          statusBadge = '<span class="badge badge-success">✓ Válido</span>';
+        } else {
+          const errCode = reg.erro ? reg.erro.codigo : 'ERRO';
+          const errMsg = reg.erro ? reg.erro.mensagem : '';
+          statusBadge = `<span class="badge badge-error" title="${errMsg}">✕ ${errCode}</span>`;
+        }
+
+        if (reg.avisos && reg.avisos.length > 0) {
+          statusBadge += ` <span class="badge badge-warning" title="${reg.avisos.join(', ')}">⚠️ W01</span>`;
+        }
+
+        tr.innerHTML = `
+          <td><strong>${reg.linha_num || (idx + 1)}</strong></td>
+          <td>
+            <div class="mono-code">
+              <span>${reg.codigo_barras}</span>
+              <button class="copy-btn" title="Copiar Código de Barras (44)" onclick="copiarTexto('${reg.codigo_barras}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+          </td>
+          <td>
+            <div class="mono-code">
+              <span>${reg.linha_digitavel || '-'}</span>
+              ${reg.linha_digitavel ? `
+              <button class="copy-btn" title="Copiar Linha Digitável (47)" onclick="copiarTexto('${reg.linha_digitavel}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>` : ''}
+            </div>
+          </td>
+          <td>
+            <div class="mono-code">
+              <span style="font-weight: 600; color: var(--itau-blue);">${reg.linha_digitavel_formatada || '-'}</span>
+              ${reg.linha_digitavel_formatada ? `
+              <button class="copy-btn" title="Copiar Linha Formatada" onclick="copiarTexto('${reg.linha_digitavel_formatada}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>` : ''}
+            </div>
+          </td>
+          <td>${statusBadge}</td>
+          <td>
+            <span class="badge badge-bank">${reg.banco_cod || '---'}</span>
+            <span style="font-size: 0.8rem; margin-left: 0.25rem;">${reg.banco_nome || ''}</span>
+          </td>
+          <td>
+            <div style="font-weight: 600; font-size: 0.85rem;">${reg.beneficiario_nome || 'Não informado'}</div>
+            <div style="font-size: 0.75rem; color: #64748b;">${reg.beneficiario_doc || ''}</div>
+          </td>
+          <td style="font-weight: 700; white-space: nowrap;">${reg.valor_formatado || 'R$ 0,00'}</td>
+          <td style="white-space: nowrap;">${reg.data_vencimento || 'Sem vencimento'}</td>
+          <td style="font-size: 0.75rem; color: #64748b;">${reg.origem || 'CNAB'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Exportação Excel Inteligente (SheetJS no Cliente ou API no Servidor)
+    function baixarExcel() {
+      if (!registrosGlobais || registrosGlobais.length === 0) {
+        showToast('Nenhum registro para exportar', '⚠️');
+        return;
+      }
+
+      showToast('Gerando planilha Excel (.xlsx)...', '⏳');
+
+      // Se SheetJS estiver disponível no cliente (online/Vercel)
+      if (typeof XLSX !== 'undefined') {
+        try {
+          const wsData = [
+            [
+              "Item",
+              "Código de Barras (44 dígitos)",
+              "Linha Digitável (47 dígitos)",
+              "Linha Digitável Formatada",
+              "Status",
+              "Banco Emissor",
+              "Beneficiário / Cedente",
+              "CNPJ / CPF Beneficiário",
+              "Valor (R$)",
+              "Vencimento",
+              "Fator",
+              "Origem no Arquivo",
+              "Mensagem / Erro / Avisos"
+            ]
+          ];
+
+          registrosGlobais.forEach((r, idx) => {
+            const statusStr = r.valido ? "VÁLIDO" : (r.erro ? r.erro.codigo : "ERRO");
+            let obs = "";
+            if (!r.valido && r.erro) obs = `${r.erro.codigo}: ${r.erro.mensagem}`;
+            else if (r.avisos && r.avisos.length > 0) obs = r.avisos.join(' | ');
+
+            wsData.push([
+              idx + 1,
+              { t: 's', v: String(r.codigo_barras || '') }, // preserva zeros à esquerda como texto estrito
+              { t: 's', v: String(r.linha_digitavel || '') },
+              { t: 's', v: String(r.linha_digitavel_formatada || '') },
+              statusStr,
+              `${r.banco_cod || ''} - ${r.banco_nome || ''}`,
+              r.beneficiario_nome || '',
+              r.beneficiario_doc || '',
+              r.valor_formatado || '',
+              r.data_vencimento || '',
+              r.fator_vencimento || '',
+              r.origem || '',
+              obs
+            ]);
+          });
+
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(wsData);
+          ws['!cols'] = [
+            { wch: 8 }, { wch: 48 }, { wch: 52 }, { wch: 56 }, { wch: 14 },
+            { wch: 32 }, { wch: 34 }, { wch: 22 }, { wch: 16 }, { wch: 14 },
+            { wch: 10 }, { wch: 22 }, { wch: 35 }
+          ];
+
+          XLSX.utils.book_append_sheet(wb, ws, "DDA Itau - Barras e Linha");
+          XLSX.writeFile(wb, "DDA_Itau_Barras_e_Linhas_Lado_a_Lado.xlsx");
+          showToast('Planilha Excel baixada com sucesso!');
+          return;
+        } catch (e) {
+          console.warn('Erro com SheetJS, tentando endpoint backend...', e);
+        }
+      }
+
+      // Fallback para endpoint Python do backend
+      fetch('/api/export-excel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registros: registrosGlobais })
+      })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'DDA_Itau_Barras_e_Linhas_Lado_a_Lado.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast('Planilha Excel baixada com sucesso!');
+      })
+      .catch(err => {
+        showToast('Erro ao baixar Excel: ' + err, '⚠️');
+      });
+    }
+
+    // Download CSV
+    function baixarCSV() {
+      if (!registrosGlobais || registrosGlobais.length === 0) {
+        showToast('Nenhum registro para exportar', '⚠️');
+        return;
+      }
+      showToast('Gerando arquivo CSV...', '⏳');
+
+      let csvContent = '\uFEFF';
+      const headers = [
+        "Item", "Codigo_Barras_44", "Linha_Digitavel_47", "Linha_Digitavel_Formatada",
+        "Status", "Banco_Codigo", "Banco_Nome", "Beneficiario_Cedente", "CNPJ_CPF_Beneficiario",
+        "Valor", "Data_Vencimento", "Fator_Vencimento", "Origem_Arquivo", "Observacoes_Erros"
+      ];
+      csvContent += headers.join(';') + '\n';
+
+      registrosGlobais.forEach((r, idx) => {
+        const statusStr = r.valido ? "VALIDO" : (r.erro ? r.erro.codigo : "ERRO");
+        let obs = "";
+        if (!r.valido && r.erro) obs = `${r.erro.codigo}: ${r.erro.mensagem}`;
+        else if (r.avisos && r.avisos.length > 0) obs = r.avisos.join(' | ');
+
+        const linha = [
+          idx + 1,
+          `="${r.codigo_barras || ''}"`,
+          `="${r.linha_digitavel || ''}"`,
+          `"${r.linha_digitavel_formatada || ''}"`,
+          statusStr,
+          `"${r.banco_cod || ''}"`,
+          `"${r.banco_nome || ''}"`,
+          `"${r.beneficiario_nome || ''}"`,
+          `"${r.beneficiario_doc || ''}"`,
+          `"${r.valor_formatado || ''}"`,
+          `"${r.data_vencimento || ''}"`,
+          `"${r.fator_vencimento || ''}"`,
+          `"${r.origem || ''}"`,
+          `"${obs}"`
+        ];
+        csvContent += linha.join(';') + '\n';
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'DDA_Itau_Barras_e_Linhas.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast('Arquivo CSV baixado com sucesso!');
+    }
+
+    // --- Tab 2: Conversor Unitário Interativo ---
+    function trocarDirecao() {
+      const dir = document.querySelector('input[name="direction"]:checked').value;
+      const label = document.getElementById('label-input-single');
+      const input = document.getElementById('single-input');
+
+      if (dir === 'barras_para_linha') {
+        label.textContent = 'Código de Barras (44 dígitos):';
+        input.placeholder = 'Ex: 34191100000000150001234567890123456789012345';
+      } else {
+        label.textContent = 'Linha Digitável (47 dígitos):';
+        input.placeholder = 'Ex: 34191234546789012345767890123457110000000015000';
+      }
+      executarConversaoUnitaria();
+    }
+
+    function executarConversaoUnitaria() {
+      const val = document.getElementById('single-input').value.trim();
+      const dir = document.querySelector('input[name="direction"]:checked').value;
+      const resultBox = document.getElementById('single-result-box');
+
+      if (!val) {
+        resultBox.style.display = 'none';
+        return;
+      }
+
+      // Executa primeiro localmente no JS (zero latência)
+      let data = null;
+      if (dir === 'barras_para_linha') {
+        data = converterBarrasParaLinhaJs(val);
+      } else {
+        data = converterLinhaParaBarrasJs(val);
+      }
+
+      resultBox.style.display = 'block';
+      const badge = document.getElementById('single-status-badge');
+      const successBox = document.getElementById('single-success-content');
+      const errorBox = document.getElementById('single-error-content');
+
+      if (data.ok) {
+        badge.innerHTML = '<span class="badge badge-success">✓ Válido</span>';
+        successBox.style.display = 'block';
+        errorBox.style.display = 'none';
+
+        if (dir === 'barras_para_linha') {
+          document.getElementById('single-res-fmt').value = data.formatada || '';
+          document.getElementById('single-res-raw').value = data.valor || '';
+          document.getElementById('bd-banco').textContent = `${data.banco_cod} (${data.banco_nome.split(' ')[0]})`;
+          document.getElementById('bd-dvg').textContent = val[4] || '-';
+          document.getElementById('bd-fator').textContent = data.fator_vencimento || '-';
+          document.getElementById('bd-data').textContent = data.data_vencimento_calculada || '-';
+          document.getElementById('bd-valor').textContent = data.valor_nominal_formatado || '-';
+        } else {
+          document.getElementById('single-res-fmt').value = data.valor || '';
+          document.getElementById('single-res-raw').value = data.valor || '';
+          document.getElementById('bd-banco').textContent = `${data.banco_cod} (${data.banco_nome.split(' ')[0]})`;
+          document.getElementById('bd-dvg').textContent = data.valor[4] || '-';
+          document.getElementById('bd-fator').textContent = data.valor.substring(5, 9) || '-';
+          document.getElementById('bd-data').textContent = '-';
+          document.getElementById('bd-valor').textContent = '-';
+        }
+      } else {
+        badge.innerHTML = `<span class="badge badge-error">✕ ${data.erro ? data.erro.codigo : 'ERRO'}</span>`;
+        successBox.style.display = 'none';
+        errorBox.style.display = 'block';
+        document.getElementById('single-error-code').textContent = data.erro ? data.erro.codigo : 'ERRO';
+        document.getElementById('single-error-msg').textContent = data.erro ? data.erro.mensagem : 'Erro desconhecido';
+      }
+    }
+
+    function carregarPreset(tipo) {
+      const dirRadio = document.querySelector('input[name="direction"][value="barras_para_linha"]');
+      dirRadio.checked = true;
+      trocarDirecao();
+
+      let val = "";
+      if (tipo === 'caso_a') {
+        val = "34191100000000150001234567890123456789012345";
+      } else if (tipo === 'caso_b') {
+        val = "00193000000000000000000000000000000000000001";
+      } else if (tipo === 'caso_c') {
+        val = "03391999900001234569876543210987654321098765";
+      } else if (tipo === 'erro_e05') {
+        val = "34192100000000150001234567890123456789012345";
+      }
+      document.getElementById('single-input').value = val;
+      executarConversaoUnitaria();
+    }
+  </script>
+</body>
+</html>
