@@ -1,6 +1,6 @@
-# Portal DDA Itaú — Conversor CNAB 240 (44 para 47 dígitos)
+# Matacompany — Portal DDA Itaú (Conversor CNAB 240)
 
-Portal web e utilitário em Python para leitura de arquivos de **DDA do Banco Itaú (extensão `.DET`)**, identificação de códigos de barras de **44 dígitos** (Segmento G do CNAB 240) e tradução para **Linha Digitável de 47 dígitos**, com exportação dos dados **lado a lado em planilha Excel (.xlsx)**.
+Portal web e utilitário em Python da **Matacompany** para leitura de arquivos de **DDA do Banco Itaú (extensão `.DET`)**, identificação de códigos de barras de **44 dígitos** (Segmento G do CNAB 240) e tradução para **Linha Digitável de 47 dígitos**, com exportação dos dados **lado a lado em planilha Excel (.xlsx)**.
 
 ---
 

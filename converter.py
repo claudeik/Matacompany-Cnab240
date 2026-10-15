@@ -451,7 +451,7 @@ def gerar_excel_xlsx(registros: List[Dict[str, Any]]) -> bytes:
     workbook_xml = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
-    <sheet name="DDA Itau - Barras e Linha" sheetId="1" r:id="rId1"/>
+    <sheet name="Matacompany - DDA Itau" sheetId="1" r:id="rId1"/>
   </sheets>
 </workbook>"""
 
